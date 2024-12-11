@@ -1,5 +1,6 @@
 install.packages("scatterplot3d")
 install.packages("viridis")
+install.packages("GGally")
 
 # Here we load the required libraries
 library(ggplot2)
@@ -62,6 +63,8 @@ clim$p_mean <- as.numeric(gsub(",", "", clim$p_mean))
 clim
 
 
+
+# We used the summary() function to find the descriptive statistics of the dataframe we have.
 summary(clim)
 
 # > summary(clim)
@@ -94,6 +97,25 @@ summary(clim)
 #  3rd Qu.:2210
 #  Max.   :2805
 
+# We print our column names for clarity
+colnames(clim)
+
+# colnames(clim)
+#  [1] "station_name"             "altitude"
+#  [3] "latitude"                 "longitude"
+#  [5] "mean_temp"                "max_temp"
+#  [7] "min_temp"                 "relative_humidity"
+#  [9] "mean_precip"              "max_precip_24hours"
+# [11] "number_rainy_days"        "number_sunshine_hours/yr"
+
+
+# We also find the number of rows and colums respectively
+# We have 36 rows and 12 columns in the dataframe
+
+dim(clim)
+
+# > dim(clim)
+#  36 12
 
 
 # First we exclude the two high mountain extremes
@@ -187,7 +209,22 @@ predictions <- predict(refined_model, newdata = new_data, interval = "confidence
 
 # Print predictions and compare with measured means
 print(predictions)
-# 3D Scatterplot with enhanced visualization
+
+# > print(predictions)
+#         fit       lwr      upr
+# 1  6.187574  4.333741 8.041407
+# 2 -3.463727 -8.134782 1.207329
+# >
+
+# from the dataframe before exclusion, we find our average means
+# for Mont-Ventoux and Pic-du-Midi to be '3.6' and '-1.2'
+#
+clim
+refined_model <- lm(mean_temp ~ altitude + latitude, data = climfrar)
+
+
+png("3d_scatterplot.png", width = 800, height = 600, dpi = 800)
+# Create 3D scatterplot
 s3d <- scatterplot3d(
     x = climfrar$altitude,
     y = climfrar$latitude,
@@ -204,15 +241,15 @@ s3d <- scatterplot3d(
     angle = 32 # Adjust angle for better perspective
 )
 
-# Add regression plane without any mesh/grid lines
+# Add regression plane
 s3d$plane3d(
-    model,
-    draw_polygon = TRUE, # Ensure plane is drawn as a polygon
-    polygon_args = list(col = adjustcolor("#85C1E9", alpha.f = 0.3)) # Semi-transparent blue
+    refined_model,
+    draw_polygon = TRUE, # Ensure the plane is drawn as a polygon
+    polygon_args = list(col = adjustcolor("#85C1E9", alpha.f = 0.3)) # Semi-transparent blue (adjust alpha for better visibility)
 )
 
 # Add text labels for selected points (optional)
-highlight_indices <- c(1, 10, 20) # Indices of points to label
+highlight_indices <- c(1, 10, 15, 20, 30) # Indices of points to label
 text(
     s3d$xyz.convert(
         climfrar$altitude[highlight_indices],
@@ -223,16 +260,33 @@ text(
     pos = 3, cex = 0.8, col = "black"
 )
 
+
+dev.off()
+
 # Model summary
 summary(refined_model)
 
+# Coefficients:
+#               Estimate Std. Error t value Pr(>|t|)
+# (Intercept) 37.9147567  2.4828724   15.27 5.68e-16 ***
+# altitude    -0.0062643  0.0008443   -7.42 2.34e-08 ***
+# latitude    -0.5465325  0.0532610  -10.26 1.72e-11 ***
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
+# Residual standard error: 0.7268 on 31 degrees of freedom
+# Multiple R-squared:  0.8292,    Adjusted R-squared:  0.8182
+# F-statistic: 75.26 on 2 and 31 DF,  p-value: 1.268e-12
 
 
 
 
 # We get the map of France using the map_data() function and save it to a variable
 # 'france_map'.
+
+# Get the map data for France
+france_map <- map_data("france")
+
 # Plot the map of France with climate stations
 ggplot() +
     # Plot map of France
@@ -242,16 +296,19 @@ ggplot() +
         fill = "lightgray", color = "white", size = 0.1
     ) +
 
-    # Plot climate stations as red dots with improved aesthetics
+    # Plot climate stations with mean temperature reflected in color
     geom_point(
-        data = climfrar, aes(x = longitude, y = latitude),
-        color = "#ae282c", size = 3, alpha = 0.7, shape = 19
+        data = climfrar, aes(x = longitude, y = latitude, color = mean_temp),
+        size = 3, alpha = 0.7, shape = 19
     ) +
+
+    # Customize color scale for mean temperature
+    scale_color_viridis_c(option = "plasma", name = "Mean Temperature (°C)") +
 
     # Customize title and labels
     labs(
         title = "Climate Stations in France",
-        subtitle = "Locations of 34 climate stations",
+        subtitle = "Mean Temperature Intensity at 34 Climate Stations",
         x = "Longitude",
         y = "Latitude"
     ) +
@@ -264,12 +321,69 @@ ggplot() +
         axis.title.x = element_text(size = 14, color = "#444444"),
         axis.title.y = element_text(size = 14, color = "#444444"),
         axis.text = element_text(size = 12, color = "#666666"),
-        # We removed the grid lines for a more cleaner look
+
+        # Adjust the size of the legend
+        legend.key.size = unit(0.5, "cm"), # Smaller legend key
+        legend.title = element_text(size = 10), # Smaller legend title
+        legend.text = element_text(size = 8), # Smaller legend text
+
+        # Removed the grid lines for a cleaner look
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()
     )
 
 
+ggsave("map_by_region.png", width = 10, height = 6, dpi = 300)
+
+
+# Other plots we explored for better visualization.
+
+# Create the plot
+ggplot(climfrar, aes(x = relative_humidity, y = altitude, color = mean_temp)) +
+    geom_point(size = 3, alpha = 0.7) +
+    facet_wrap(~station_name) + # Faceting by station name
+    scale_color_viridis_c() + # Color scale for temperature
+    labs(
+        title = "Mean Temperature by Region",
+        x = "Relative Humidity",
+        y = "Altitude",
+        color = "Mean Temperature (°C)"
+    ) +
+    # Customizing the theme separately
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 18, face = "bold", color = "#333333", hjust = 0.5),
+        plot.subtitle = element_text(size = 14, color = "#555555", hjust = 0.5),
+        axis.title.x = element_text(size = 14, color = "#444444"),
+        axis.title.y = element_text(size = 14, color = "#444444"),
+        axis.text = element_text(size = 12, color = "#666666"),
+        strip.text = element_text(size = 11, color = "#333333")
+    )
+
+# Save the plot as a high-resolution PNG image
+ggsave("mean_temp_by_region.png", width = 12, height = 8, dpi = 300)
+
+
+
+
+
+ggplot(climfrar, aes(x = altitude, y = mean_temp)) +
+    geom_point(color = "#ae282c", size = 3, alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE, color = "black") +
+    labs(title = "Mean Temperature plotted against Altitude", x = "Altitude (m)", y = "Mean Temperature (°C)") +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 18, face = "bold", color = "#333333", hjust = 0.5),
+        plot.subtitle = element_text(size = 14, color = "#555555", hjust = 0.5),
+        axis.title.x = element_text(size = 14, color = "#444444"),
+        axis.title.y = element_text(size = 14, color = "#444444"),
+        axis.text = element_text(size = 12, color = "#666666"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+    )
+
+# Save the plot as a high-resolution PNG image
+ggsave("mean_temp_vs_altitude.png", width = 14, height = 8, dpi = 300)
 
 
 
@@ -280,6 +394,25 @@ ggplot() +
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+colnames(climfrar)
 
 # Standardize the predictor variables
 climfrar$altitude_std <- scale(climfrar$altitude)
