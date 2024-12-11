@@ -10,7 +10,7 @@ library(scatterplot3d)
 library(viridis)
 
 
-
+# We read the csv file into our variable name 'clim'
 clim <- read.csv("https://userpage.fu-berlin.de/soga/data/raw-data/Climfrance.csv", sep = ";")
 
 
