@@ -183,6 +183,35 @@ summary(refined_model)
 # Multiple R-squared:  0.8292,    Adjusted R-squared:  0.8182
 # F-statistic: 75.26 on 2 and 31 DF,  p-value: 1.268e-12
 
+
+# Intercept (Estimate = 37.265): The intercept represents the predicted mean
+# temperature when all the altitude, latitude, and longitude are zero.
+
+# Altitude (Estimate = -0.0064): The altitude indicates that for every 1-meter
+# increase in altitude, the mean temperature decreases by approximately 0.0064°C.
+# The standard error for altitude is 0.0009, leading to a very large t-value (-7.383) and
+# an extremely small p-value (p < 0.001). Therefore, altitude is statistically significant.
+# 53. Latitude (Estimate = -0.534): For every 1-degree increase in latitude, the
+# mean temperature decreases by approximately 0.534°C. With a standard error of
+# 0.056, the corresponding t-value (-9.577) is also large, and the p-value (p ¡ 0.001).
+# Therefore, latitude is statistically significant.
+# 4. Longitude (Estimate = 0.0321): For every 1-degree increase in longitude, the
+# mean temperature increases by approximately 0.0321°C. However, the standard
+# error for longitude is 0.0396, yielding a relatively small t-value (0.811) and a high
+# p-value (p = 0.424). Therefore, longitude is not statistically significant.
+
+# Residual Standard Error (RSE = 0.7308): The average deviation of the observed mean temperatures from the model fit. 0.7308 suggests a moderately good
+# fit.
+# Multiple R-squared (0.8329): Approximately 83.29% of the variance in mean
+# temperature is explained by altitude, latitude, and longitude.
+# Adjusted R-squared (0.8162): This indicates the model has strong explanatory
+# power, even after accounting for the number of predictors.
+
+# F-statistic (49.84, p ¡ 0.001): Our model, with a very high F-statistic and a
+# p-value well below 0.001, is highly significant overall.
+
+
+
 # Mont-Ventoux and Pic-du-midi data (latitude and altitude) was used only,
 # because our refined model now uses only the altitude and latitude as predictors
 # since the longitude is not a significant predictor in terms of p-value > 0.05.
@@ -219,12 +248,15 @@ print(predictions)
 # from the dataframe before exclusion, we find our average means
 # for Mont-Ventoux and Pic-du-Midi to be '3.6' and '-1.2'
 #
-clim
-refined_model <- lm(mean_temp ~ altitude + latitude, data = climfrar)
 
 
+# Here, I plot the 3D scatter plot, adding a 2D regression plane
+# our x axis = altitude
+# our y axis = latitude
+# our z axis = mean temperature
 png("3d_scatterplot.png", width = 800, height = 600, dpi = 800)
-# Create 3D scatterplot
+# We created a 3D scatterplot
+# we set parameters to make the plot interpretable.
 s3d <- scatterplot3d(
     x = climfrar$altitude,
     y = climfrar$latitude,
@@ -233,15 +265,15 @@ s3d <- scatterplot3d(
     ylab = "Latitude (°N)",
     zlab = "Mean Temperature (°C)",
     main = "3D Scatterplot: Mean Temperature vs Altitude & Latitude",
-    pch = 16, # Filled circles
-    cex.symbols = 1.5, # Larger points for better visibility
-    color = viridis(34), # Gradient color scale
-    grid = FALSE, # Remove grid lines
-    box = TRUE, # Keep box around the plot
-    angle = 32 # Adjust angle for better perspective
+    pch = 16,
+    cex.symbols = 1.5,
+    color = viridis(34),
+    grid = FALSE,
+    box = TRUE,
+    angle = 32
 )
 
-# Add regression plane
+# We added our regression plane
 s3d$plane3d(
     refined_model,
     draw_polygon = TRUE, # Ensure the plane is drawn as a polygon
@@ -278,42 +310,64 @@ summary(refined_model)
 # Multiple R-squared:  0.8292,    Adjusted R-squared:  0.8182
 # F-statistic: 75.26 on 2 and 31 DF,  p-value: 1.268e-12
 
+# Intercept (Estimate = 37.91):
+# The predicted mean temperature when all the altitude, latitude, and longitude are zero
+# is 37.91.
+# Altitude (Estimate = -0.0063):
+# The altitude indicates that for every 1-meter increase in altitude, the mean temperature
+# decreases by approximately 0.0063°C. The standard error for altitude is 0.0008, leading
+# to a very large t-value (-7.42) and an extremely small p-value (p ¡ 0.001). Therefore,
+# altitude is still statistically significant.
+# Latitude (Estimate = -0.546):
+# For every 1-degree increase in latitude, the mean temperature decreases by approximately
+# 0.546°C. With a standard error of 0.053, the corresponding t-value (-10.26) is also large,
+# and the p-value (p ¡ 0.001). Therefore, latitude is statistically significant.
 
+# Residual Standard Error (RSE = 0.7268):
+# Upon removal of the longitude as a predictor, the average deviation of the observed mean
+# temperatures from the model fit further reduced to 0.7268 suggesting a good fit.
+# Multiple R-squared (0.8292):
+# Approximately 82.92% of the variance in mean temperature is explained by altitude,
+# latitude, and longitude.
+# Adjusted R-squared (0.8182):
+# This indicates the model has strong explanatory power, after removing longitude as a
+# predictor
 
+# F-statistic (75.26, p <0.001):
+# Our refined model has a higher F-statistic and a p-value well below 0.001, suggesting
+# an overall better model.
 
 # We get the map of France using the map_data() function and save it to a variable
 # 'france_map'.
 
-# Get the map data for France
+# We get the map data for France and saved to the variable 'france_map'
 france_map <- map_data("france")
 
-# Plot the map of France with climate stations
+# We ploted the map of France with climate stations
 ggplot() +
-    # Plot map of France
+    # We plot map of France
     geom_map(
         data = france_map, map = france_map,
         aes(x = long, y = lat, map_id = region),
         fill = "lightgray", color = "white", size = 0.1
     ) +
 
-    # Plot climate stations with mean temperature reflected in color
+    # We plot climate stations with mean temperature reflected in color
     geom_point(
         data = climfrar, aes(x = longitude, y = latitude, color = mean_temp),
         size = 3, alpha = 0.7, shape = 19
     ) +
 
-    # Customize color scale for mean temperature
+    # We customize color scale for mean temperature
     scale_color_viridis_c(option = "plasma", name = "Mean Temperature (°C)") +
 
-    # Customize title and labels
+    # We customize title and labels
     labs(
         title = "Climate Stations in France",
         subtitle = "Mean Temperature Intensity at 34 Climate Stations",
         x = "Longitude",
         y = "Latitude"
     ) +
-
-    # Modernize the theme for a clean, minimalistic look
     theme_minimal(base_size = 15) +
     theme(
         plot.title = element_text(size = 18, face = "bold", color = "#333333", hjust = 0.5),
@@ -322,23 +376,23 @@ ggplot() +
         axis.title.y = element_text(size = 14, color = "#444444"),
         axis.text = element_text(size = 12, color = "#666666"),
 
-        # Adjust the size of the legend
+        # We adjust the size of the legend
         legend.key.size = unit(0.5, "cm"), # Smaller legend key
         legend.title = element_text(size = 10), # Smaller legend title
         legend.text = element_text(size = 8), # Smaller legend text
 
-        # Removed the grid lines for a cleaner look
+        # We removed the grid lines for a cleaner look
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()
     )
 
-
+# We saved the plot
 ggsave("map_by_region.png", width = 10, height = 6, dpi = 300)
 
 
 # Other plots we explored for better visualization.
 
-# Create the plot
+# We created the plot, a scatter plot
 ggplot(climfrar, aes(x = relative_humidity, y = altitude, color = mean_temp)) +
     geom_point(size = 3, alpha = 0.7) +
     facet_wrap(~station_name) + # Faceting by station name
@@ -349,7 +403,6 @@ ggplot(climfrar, aes(x = relative_humidity, y = altitude, color = mean_temp)) +
         y = "Altitude",
         color = "Mean Temperature (°C)"
     ) +
-    # Customizing the theme separately
     theme_minimal() +
     theme(
         plot.title = element_text(size = 18, face = "bold", color = "#333333", hjust = 0.5),
@@ -360,7 +413,6 @@ ggplot(climfrar, aes(x = relative_humidity, y = altitude, color = mean_temp)) +
         strip.text = element_text(size = 11, color = "#333333")
     )
 
-# Save the plot as a high-resolution PNG image
 ggsave("mean_temp_by_region.png", width = 12, height = 8, dpi = 300)
 
 
@@ -379,6 +431,4 @@ ggplot(climfrar, aes(x = altitude, y = mean_temp)) +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()
     )
-
-# Save the plot as a high-resolution PNG image
 ggsave("mean_temp_vs_altitude.png", width = 14, height = 8, dpi = 300)
