@@ -365,8 +365,6 @@ ggsave("mean_temp_by_region.png", width = 12, height = 8, dpi = 300)
 
 
 
-
-
 ggplot(climfrar, aes(x = altitude, y = mean_temp)) +
     geom_point(color = "#ae282c", size = 3, alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE, color = "black") +
